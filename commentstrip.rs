@@ -25,7 +25,7 @@ pub fn strip_comments(single_line_markers: &'static [&'static str],
   let multi_line_max: usize = multi_line_markers.iter().map(|(x, y)| x.len().max(y.len())).max().unwrap_or(0);
   let quote_max: usize = quote_marks.iter().map(|x| x.len()).max().unwrap_or(0);
 
-  let lookbehind_width: usize = single_line_max.max(multi_line_max).max(quote_max);
+  let lookbehind_width: usize = single_line_max.max(multi_line_max).max(quote_max) + 1;
 
   move |text: &str| {
     let mut ret = String::with_capacity(text.len());
@@ -48,7 +48,7 @@ pub fn strip_comments(single_line_markers: &'static [&'static str],
           ret.truncate(ret.len() - mark.len());
           continue;
         }
-        if let Some((_, end)) = multi_line_markers.into_iter().find(|(s, e)| lookbehind_matches(&lookbehind, s)) {
+        if let Some((_, end)) = multi_line_markers.into_iter().find(|(s, _)| lookbehind_matches(&lookbehind, s)) {
           in_comment = true;
           comment_end = Some(end);
           ret.truncate(ret.len() - end.len());
@@ -61,7 +61,7 @@ pub fn strip_comments(single_line_markers: &'static [&'static str],
       }
       else if let Some(end) = quote_end {
         ret.push(c);
-        if lookbehind_matches(&lookbehind, end) {
+        if lookbehind_matches(&lookbehind, end) && lookbehind[lookbehind.len() - 1 - end.len()] != Some('\\') {
           quote_end = None;
           continue;
         }
@@ -74,7 +74,9 @@ pub fn strip_comments(single_line_markers: &'static [&'static str],
           }
         }
         else {
-          if [Some('\n'), Some('\r')].contains(lookbehind.back().unwrap()) {
+          let back = lookbehind.back().unwrap();
+          if [Some('\n'), Some('\r')].contains(back) {
+            ret.push(back.unwrap());
             in_comment = false;
             continue;
           }
