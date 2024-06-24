@@ -59,7 +59,7 @@ function strip_comments(array $single_line_markers, array $multi_line_markers, a
           }
         }
         else {
-          if (in_array($rest[0], ['\r', '\n'], true)) {
+          if (in_array($rest[0], ["\r", "\n"], true)) {
             $ret .= $c;
             $in_comment = false;
             continue;
